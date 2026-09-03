@@ -1,0 +1,36 @@
+body {
+    margin: 0;
+    overflow: hidden;
+    background-color: #050508;
+    color: #fff;
+    font-family: monospace;
+}
+
+#canvas-container {
+    width: 100vw;
+    height: 100vh;
+}
+
+#overlay {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    z-index: 10;
+    background: rgba(15, 15, 25, 0.85);
+    padding: 15px;
+    border-radius: 6px;
+    border: 1px solid #333;
+    max-width: 320px;
+}
+
+#tooltip {
+    position: absolute;
+    display: none;
+    z-index: 20;
+    background: rgba(0, 0, 0, 0.9);
+    border: 1px solid #00ffcc;
+    padding: 8px 12px;
+    border-radius: 4px;
+    pointer-events: none;
+    font-size: 12px;
+}

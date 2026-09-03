@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Amazon Product Data Space</title>
+    
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <!-- External Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+
+    <div id="overlay">
+        <h3 style="margin-top:0;">3D Product Space</h3>
+        <p id="status">Connecting to Flask API...</p>
+        <div style="font-size: 11px; color: #aaa;">
+            <p>X: Price | Y: Rating | Z: Review Count</p>
+            <p>Click/Drag: Rotate | Scroll: Zoom</p>
+        </div>
+    </div>
+
+    <div id="tooltip"></div>
+    <div id="canvas-container"></div>
+
+    <!-- Application Script -->
+    <script src="{{ url_for('static', filename='js/visualizer.js') }}"></script>
+</body>
+</html>

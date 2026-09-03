@@ -25,7 +25,6 @@ def fetch_search_page(keyword: str, page: int = 1) -> str:
     encoded_keyword = urllib.parse.quote_plus(keyword)
     url = f"https://www.amazon.com/s?k={encoded_keyword}&page={page}"
     
-    # Use impersonate="chrome" to mimic modern Chrome TLS/JA3 handshakes
     response = requests.get(url, headers=HEADERS, impersonate="chrome", timeout=15)
     
     if response.status_code != 200:
@@ -36,7 +35,53 @@ def fetch_search_page(keyword: str, page: int = 1) -> str:
         
     return response.text
 
+def extract_price(card) -> float | None:
+    """Multi-tiered extraction for Amazon prices across layout variants."""
+    
+    # Tier 1: Offscreen standard price (e.g. "$29.99")
+    price_offscreen = card.select_one(".a-price .a-offscreen")
+    if price_offscreen:
+        price_match = re.search(r"\$\s*([\d,]+\.?\d*)", price_offscreen.get_text())
+        if price_match:
+            try:
+                return float(price_match.group(1).replace(",", ""))
+            except ValueError:
+                pass
+
+    # Tier 2: Split Whole/Fraction spans (.a-price-whole, .a-price-fraction)
+    price_whole = card.select_one(".a-price-whole")
+    if price_whole:
+        w = re.sub(r"[^\d]", "", price_whole.get_text(strip=True))
+        price_fraction = card.select_one(".a-price-fraction")
+        f = re.sub(r"[^\d]", "", price_fraction.get_text(strip=True)) if price_fraction else "00"
+        try:
+            return float(f"{w}.{f}")
+        except ValueError:
+            pass
+
+    # Tier 3: Secondary price containers (e.g. buying options, used/renewed, ranges)
+    secondary_selectors = [
+        ".a-color-price",
+        "span.a-color-base",
+        ".a-section .a-price",
+        'span[aria-hidden="true"]:has(.a-price-symbol)'
+    ]
+    for selector in secondary_selectors:
+        for elem in card.select(selector):
+            text = elem.get_text(strip=True)
+            match = re.search(r"\$\s*([\d,]+\.?\d*)", text)
+            if match:
+                try:
+                    val = float(match.group(1).replace(",", ""))
+                    if val > 0:
+                        return val
+                except ValueError:
+                    continue
+
+    return None
+
 def parse_search_results(html: str, category: str) -> list[dict]:
+    """Parses Amazon search HTML and extracts product metrics."""
     soup = BeautifulSoup(html, "html.parser")
     
     page_title = soup.title.string.strip() if soup.title else "No Title"
@@ -60,35 +105,13 @@ def parse_search_results(html: str, category: str) -> list[dict]:
         if not title:
             continue
 
-        # Product URL (check h2 link first, fallback to any product link with ASIN)
-        link_elem = card.select_one("h2 a, a.a-link-normal.s-no-hover, a.a-link-normal.s-underline-text")
-        product_url = None
-        if link_elem and link_elem.has_attr("href"):
-            href = link_elem["href"]
-            product_url = href if href.startswith("http") else f"https://www.amazon.com{href}"
+        # Canonical Product URL
+        product_url = f"https://www.amazon.com/dp/{asin}"
 
-        # Price (check offscreen text, then price container, then whole/fraction span)
-        price = None
-        price_elem = card.select_one(".a-price .a-offscreen")
-        if price_elem:
-            price_raw = re.sub(r"[^\d.]", "", price_elem.get_text(strip=True))
-            try:
-                price = float(price_raw)
-            except ValueError:
-                price = None
-        
-        if price is None:
-            price_whole = card.select_one(".a-price-whole")
-            price_fraction = card.select_one(".a-price-fraction")
-            if price_whole:
-                w = re.sub(r"[^\d]", "", price_whole.get_text(strip=True))
-                f = re.sub(r"[^\d]", "", price_fraction.get_text(strip=True)) if price_fraction else "00"
-                try:
-                    price = float(f"{w}.{f}")
-                except ValueError:
-                    price = None
+        # Price via multi-tiered fallback
+        price = extract_price(card)
 
-        # Rating (check star icon aria-label, text, or parent title)
+        # Rating
         rating = None
         rating_elem = card.select_one("i[class*='a-icon-star'] span, span[aria-label*='out of 5 stars'], i[class*='a-icon-star']")
         if rating_elem:
@@ -100,7 +123,7 @@ def parse_search_results(html: str, category: str) -> list[dict]:
                 except ValueError:
                     rating = None
 
-        # Review Count (check review count links and aria labels)
+        # Review Count
         review_count = None
         reviews_elem = card.select_one('a[href*="#customerReviews"] span, a[href*="customerReviews"] span, span.a-size-base.s-underline-text')
         if reviews_elem:
@@ -135,9 +158,7 @@ def scrape_amazon_category(keyword: str, max_pages: int = 1) -> list[dict]:
         all_products.extend(products)
     return all_products
 
-
 if __name__ == "__main__":
-    # Isolated test run
     test_keyword = "wireless headphones"
     print(f"Testing search scraper for keyword: '{test_keyword}'...")
     results = scrape_amazon_category(test_keyword, max_pages=1)

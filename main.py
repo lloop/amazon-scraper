@@ -2,6 +2,7 @@ import logging
 import time
 from database.database import init_db, get_connection
 from scrapers.amazon_search import scrape_amazon_category
+from scrapers.amazon_detail import hydrate_missing_prices
 
 # Configure logging
 logging.basicConfig(
@@ -61,6 +62,10 @@ def run_pipeline(max_pages_per_category: int = 2):
         
         # Polite delay between category runs to avoid triggering aggressive IP rate caps
         time.sleep(3)
+        
+    # Step 2: Call detail hydration AFTER all search results are saved
+    hydrate_missing_prices(limit=15)
+    
 
 if __name__ == "__main__":
     run_pipeline(max_pages_per_category=1)
