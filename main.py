@@ -64,8 +64,8 @@ def run_pipeline(max_pages_per_category: int = 2):
         time.sleep(3)
         
     # Step 2: Call detail hydration AFTER all search results are saved
-    hydrate_missing_prices(limit=15)
+    # hydrate_missing_prices(limit=15)
     
 
 if __name__ == "__main__":
-    run_pipeline(max_pages_per_category=1)
+    run_pipeline(max_pages_per_category=20)

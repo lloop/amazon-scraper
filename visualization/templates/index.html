@@ -3,27 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D Amazon Product Data Space (deck.gl)</title>
+    <title>Amazon Product Space (D3.js)</title>
     
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 
-    <!-- deck.gl Standalone Bundle -->
-    <script src="https://unpkg.com/deck.gl@latest/dist.min.js"></script>
+    <!-- D3.js v7 CDN -->
+    <script defer src="https://d3js.org/d3.v7.min.js"></script>
 </head>
 <body>
 
-    <div id="overlay">
-        <h3 style="margin-top:0;">3D Product Space</h3>
-        <p id="status">Initializing deck.gl...</p>
+    <!-- <div id="overlay">
+        <h3 style="margin-top:0;">Amazon.com Product Space</h3>
+        <p id="status">Initializing D3.js Beeswarm...</p>
         <div style="font-size: 11px; color: #aaa;">
-            <p>X: Price ($) | Y: Rating (1-5★) | Z: Reviews</p>
-            <p>Left Click + Drag: Rotate | Right Click + Drag: Pan | Scroll: Zoom</p>
+            <p>X: Price ($) | Y: Category Groups | Radius: Review Count</p>
+            <p>Hover over nodes for product details.</p>
         </div>
-    </div>
+    </div> -->
+
+    <div id="filter-container"></div>
 
     <div id="tooltip"></div>
-    <div id="canvas-container"></div>
+    <div id="chart"></div>
 
-    <script src="{{ url_for('static', filename='js/visualizer.js') }}"></script>
+    <script defer src="{{ url_for('static', filename='js/visualizer.js') }}"></script>
 </body>
 </html>
